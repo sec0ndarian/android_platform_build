@@ -1036,8 +1036,12 @@ def AddImagesToTargetFiles(filename):
   recovery_image = None
   if has_recovery:
     banner("recovery")
+    # If init_boot is used for normal boot and the recovery is independent,
+    # populate /dev as bionic requires /dev/null during early init.
     recovery_image = common.GetBootableImage(
-        "IMAGES/recovery.img", "recovery.img", OPTIONS.input_tmp, "RECOVERY")
+        "IMAGES/recovery.img", "recovery.img", OPTIONS.input_tmp, "RECOVERY",
+        dev_nodes=(has_init_boot and
+            OPTIONS.info_dict.get("exclude_kernel_from_recovery_image") != "true"))
     assert recovery_image, "Failed to create recovery.img."
     partitions['recovery'] = os.path.join(
         OPTIONS.input_tmp, "IMAGES", "recovery.img")

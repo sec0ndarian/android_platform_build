@@ -2788,8 +2788,18 @@ $(INTERNAL_RECOVERY_RAMDISK_FILES_TIMESTAMP): $(MKBOOTFS) $(COMPRESSION_COMMAND_
 	$(BOARD_RECOVERY_IMAGE_PREPARE)
 	$(hide) touch $@
 
+# We populate /dev for independent recoveries to fullfill bionic's requirement
+# for /dev/null during early init analogously to the generic ramdisk, if the
+# latter is used normally as it indicates that the kernel may set AT_SECURE.
+#
+# Standalone recovery ramdisks in vendor_boot are automatically excluded as they
+# are simply additional vendor ramdisks and created elsewhere.
+MKBOOTFS_RECOVERY_EXTRA_ARGS := \
+    $(if $(and $(INSTALLED_INIT_BOOT_IMAGE_TARGET), $(if $(filter true,$(BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE)),,true)), \
+      -n $(RAMDISK_NODE_LIST))
+
 $(recovery_ramdisk): $(INTERNAL_RECOVERY_RAMDISK_FILES_TIMESTAMP)
-	$(MKBOOTFS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(COMPRESSION_COMMAND) > $(recovery_ramdisk)
+	$(MKBOOTFS) $(MKBOOTFS_RECOVERY_EXTRA_ARGS) -d $(TARGET_OUT) $(TARGET_RECOVERY_ROOT_OUT) | $(COMPRESSION_COMMAND) > $(recovery_ramdisk)
 
 # $(1): output file
 # $(2): optional kernel file
